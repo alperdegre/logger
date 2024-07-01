@@ -23,7 +23,7 @@ async function main() {
 
   // Time intensive work returs an error message to be logged
   setTimeout(() => {
-    Logger.logAsync("An error occurred", LogLevel.ERROR);
+    Logger.logAsync("Test error occurred", LogLevel.ERROR);
   }, 1000);
 
   // Non blocking test that logs an object after it is done
@@ -32,6 +32,10 @@ async function main() {
   }, 1500);
 
   Logger.warning("Sync log while waiting for async logs");
+
+  for(let i = 0; i < 1000; i++){
+    Logger.log(`Test ${i}`)
+  }
 }
 
 main();

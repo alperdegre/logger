@@ -10,13 +10,13 @@ export function colorizeMessage(message: string, level: LogLevel): string {
 
 export function appendToFile(filePath: string, message: string) {
   const logPath = getLogFilePath(filePath);
-  appendFileSync(logPath, message + "\n");
+  appendFileSync(logPath, message);
 }
 
 export async function appendToFileAsync(filePath: string, message: string) {
   const logPath = getLogFilePath(filePath);
   try {
-    await appendFile(logPath, message + "\n");
+    await appendFile(logPath, message);
   } catch (err: any) {
     console.error(`Error appending to ${filePath}: ${err.message}`);
   }

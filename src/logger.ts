@@ -1,10 +1,12 @@
 import {
+  BATCH_INTERVAL,
+  BATCH_TRESHOLD,
   DEFAULT_COLORIZED,
   DEFAULT_LOG_FILE_PATH,
   DEFAULT_LOG_FORMAT,
 } from "./constants";
-import { appendToFile, appendToFileAsync, colorizeMessage } from "./helpers";
-import { LogLevel, LogMessage, LoggerConfig } from "./types";
+import { appendToFile, colorizeMessage } from "./helpers";
+import { LogLevel, LogMessage, LoggerConfig, SerializedLog } from "./types";
 
 /**
  * Logger class for handling logging with various log levels and configurations.
@@ -17,6 +19,9 @@ export default class Logger {
   private logQueue: LogMessage[] = [];
   private processingQueue: boolean = false;
   private isColorized: boolean;
+
+  private static batchLogs: SerializedLog[] = [];
+  private static batchTimeout: NodeJS.Timeout | null = null;
 
   /**
    * Private constructor to prevent instantiation. Initializes default logger settings.
@@ -55,7 +60,8 @@ export default class Logger {
       extra
     );
 
-    appendToFile(logger.logFilePath, formattedMessage);
+    const serializedLogMessage: SerializedLog = formattedMessage;
+    Logger.handleBatchLogs(serializedLogMessage);
 
     if (logger.isColorized)
       formattedMessage = colorizeMessage(formattedMessage, currentLogLevel);
@@ -130,6 +136,24 @@ export default class Logger {
   }
 
   /**
+   * Configures the logger.
+   * @param {LoggerConfig} configuration - The configuration object. Updates only the given configuration values.
+   * @param {LogLevel} [configuration.logLevel] - Default log level for the logger. If not specified, defaults to INFO.
+   * @param {string} [configuration.filePath] - Default file path relative to the current folder for the logger. Defaults to /logs folder of the current directory.
+   * @param {boolean} [configuration.colorized] - Boolean to colorize the logs or not. Setting it true will colorize logs according to their levels. Defaults to false.
+   * @param {string} [configuration.format] - Sets the format for the logger. Can be updated to change the order of variables in a log message. Default is "[{{level}}] [{{timestamp}}] {{message}}"
+   */
+  public static configure(configuration: LoggerConfig) {
+    const { level, format, filePath, colorized } = configuration;
+    const logger = Logger.getInstance();
+
+    if (level) logger.logLevel = level;
+    if (format) logger.logFormat = format;
+    if (filePath) logger.logFilePath = filePath;
+    if (colorized) logger.isColorized = colorized;
+  }
+
+  /**
    * Asynchronously processes the log queue.
    * @private
    * @returns {Promise<void>} A promise that resolves after the queue is processed
@@ -148,7 +172,8 @@ export default class Logger {
           logMessage.extra
         );
 
-        appendToFileAsync(this.logFilePath, formattedMessage);
+        const serializedLogMessage: SerializedLog = formattedMessage;
+        Logger.handleBatchLogs(serializedLogMessage);
 
         if (this.isColorized)
           formattedMessage = colorizeMessage(formattedMessage, currentLogLevel);
@@ -160,24 +185,6 @@ export default class Logger {
     } finally {
       this.processingQueue = false;
     }
-  }
-
-  /**
-   * Configures the logger.
-   * @param {LoggerConfig} configuration - The configuration object. Updates only the given configuration values.
-   * @param {LogLevel} [configuration.logLevel] - Default log level for the logger. If not specified, defaults to INFO.
-   * @param {string} [configuration.filePath] - Default file path relative to the current folder for the logger. Defaults to /logs folder of the current directory.
-   * @param {boolean} [configuration.colorized] - Boolean to colorize the logs or not. Setting it true will colorize logs according to their levels. Defaults to false.
-   * @param {string} [configuration.format] - Sets the format for the logger. Can be updated to change the order of variables in a log message. Default is "[{{level}}] [{{timestamp}}] {{message}}"
-   */
-  public static configure(configuration: LoggerConfig) {
-    const { level, format, filePath, colorized } = configuration;
-    const logger = Logger.getInstance();
-
-    if (level) logger.logLevel = level;
-    if (format) logger.logFormat = format;
-    if (filePath) logger.logFilePath = filePath;
-    if (colorized) logger.isColorized = colorized;
   }
 
   /**
@@ -197,6 +204,43 @@ export default class Logger {
     if (extra)
       formattedMessage += ` | Extra : ${JSON.stringify(extra, null, 2)}`;
 
-    return formattedMessage;
+    return formattedMessage.trim();
+  }
+
+  /**
+   * Handles batched logs by either flushing immediately if threshold is reached or setting a timeout to flush later.
+   * @private
+   * @param {SerializedLog} log - The log message to handle
+   */
+  private static handleBatchLogs(log: SerializedLog): void {
+    Logger.batchLogs.push(log);
+
+    if (Logger.batchLogs.length > BATCH_TRESHOLD) {
+      Logger.flushAndWriteBatchedLogs();
+    } else {
+      if (!Logger.batchTimeout) {
+        Logger.batchTimeout = setTimeout(() => {
+          Logger.flushAndWriteBatchedLogs();
+        }, BATCH_INTERVAL);
+      }
+    }
+  }
+
+  /**
+   * Flushed the current logs and writes them to file
+   * @private
+   */
+  private static flushAndWriteBatchedLogs(): void {
+    const logger = Logger.getInstance();
+    const logsToFlush = [...Logger.batchLogs];
+    Logger.batchLogs = [];
+
+    const batchedLogString = logsToFlush
+      .map((log) => log.trim() + "\n")
+      .join("");
+
+    Logger.batchTimeout = null;
+
+    appendToFile(logger.logFilePath, batchedLogString);
   }
 }

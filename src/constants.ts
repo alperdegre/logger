@@ -13,3 +13,6 @@ export const LOG_COLORS: Record<LogLevel, LogColor> = {
 };
 
 export const RESET_COLOR = "\x1b[0m";
+
+export const BATCH_TRESHOLD = 100;
+export const BATCH_INTERVAL = 1000;

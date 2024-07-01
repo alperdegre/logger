@@ -26,3 +26,5 @@ export type LogMessage = {
   message: string;
   extra?: any;
 };
+
+export type SerializedLog = string;
