@@ -136,25 +136,30 @@ export default class Logger {
    */
   private async processLogQueue(): Promise<void> {
     this.processingQueue = true;
-    while (this.logQueue.length > 0) {
-      const logMessage = this.logQueue.shift();
-      if (!logMessage) break;
+    try {
+      while (this.logQueue.length > 0) {
+        const logMessage = this.logQueue.shift();
+        if (!logMessage) break;
 
-      const currentLogLevel = logMessage.level ?? this.logLevel;
-      let formattedMessage = this.formatMessage(
-        currentLogLevel,
-        logMessage.message,
-        logMessage.extra
-      );
+        const currentLogLevel = logMessage.level ?? this.logLevel;
+        let formattedMessage = this.formatMessage(
+          currentLogLevel,
+          logMessage.message,
+          logMessage.extra
+        );
 
-      appendToFileAsync(this.logFilePath, formattedMessage);
+        appendToFileAsync(this.logFilePath, formattedMessage);
 
-      if (this.isColorized)
-        formattedMessage = colorizeMessage(formattedMessage, currentLogLevel);
+        if (this.isColorized)
+          formattedMessage = colorizeMessage(formattedMessage, currentLogLevel);
 
-      console.log(formattedMessage);
+        console.log(formattedMessage);
+      }
+    } catch (error) {
+      console.log(`Error processing the log queue: ${error}`);
+    } finally {
+      this.processingQueue = false;
     }
-    this.processingQueue = false;
   }
 
   /**
