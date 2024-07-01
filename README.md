@@ -6,8 +6,8 @@ The `Logger` class provides a flexible and configurable logging mechanism in Typ
 
 - Supports logging messages with different log levels (INFO, WARNING, ERROR, DEBUG, VERBOSE).
 - Configurable log formatting, including timestamp and log level.
+- Does batch writes while writing to files so it doesnt run file write operations on every log.
 - Optional asynchronous logging to handle logging operations without blocking the main thread.
-- Ability to log messages to a file synchronously or asynchronously.
 - Optionally colorizes output log messages based on log levels.
 
 ## Usage
