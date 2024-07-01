@@ -17,6 +17,8 @@ The `Logger` class provides a flexible and configurable logging mechanism in Typ
 The `Logger` class can be used directly in your TypeScript projects. This project can be easily converted into a package to be downloaded from npm registry.
 For now it is required to copy the files and import `Logger` class to use it.
 
+You can run `npm build` to build the project or just type `npm start` and it will execute the logging operations that can be found in `src/index.ts`
+
 ### Example Usage
 
 ```typescript
