@@ -27,8 +27,68 @@ export default class Logger {
     return Logger.instance;
   }
 
-  public static log(level: LogLevel, message: string, extra?: any): void {
-    // This will send a log message
+  /**
+   * Synchronously logs a message with a specified log level.
+   * @param {string} message - The message to log
+   * @param {LogLevel} [level] - The level of the log (e.g., INFO, WARNING, ERROR). If not set, defaults to configured log level for the Logger instance.
+   * @param {any} [extra] - Any extra message to be appended to the end of the log
+   */
+  public static log(message: string, level?: LogLevel, extra?: any): void {
+    const logger = Logger.getInstance();
+
+    const currentLogLevel = level ?? logger.logLevel;
+    const formattedMessage = logger.formatMessage(
+      currentLogLevel,
+      message,
+      extra
+    );
+    console.log(formattedMessage);
+    // Maybe append to file here?
+  }
+
+  /**
+   * Synchronously logs a message in VERBOSE level.
+   * @param {string} message - The message to log
+   * @param {any} [extra] - Any extra message to be appended to the end of the log
+   */
+  public static verbose(message: string, extra?: any): void {
+    Logger.log(message, LogLevel.VERBOSE, extra);
+  }
+
+  /**
+   * Synchronously logs a message in INFO level.
+   * @param {string} message - The message to log
+   * @param {any} [extra] - Any extra message to be appended to the end of the log
+   */
+  public static info(message: string, extra?: any): void {
+    Logger.log(message, LogLevel.INFO, extra);
+  }
+
+  /**
+   * Synchronously logs a message in WARNING level.
+   * @param {string} message - The message to log
+   * @param {any} [extra] - Any extra message to be appended to the end of the log
+   */
+  public static warning(message: string, extra?: any): void {
+    Logger.log(message, LogLevel.WARNING, extra);
+  }
+
+  /**
+   * Synchronously logs a message in ERROR level.
+   * @param {string} message - The message to log
+   * @param {any} [extra] - Any extra message to be appended to the end of the log
+   */
+  public static error(message: string, extra?: any): void {
+    Logger.log(message, LogLevel.ERROR, extra);
+  }
+
+  /**
+   * Synchronously logs a message in DEBUG level.
+   * @param {string} message - The message to log
+   * @param {any} [extra] - Any extra message to be appended to the end of the log
+   */
+  public static debug(message: string, extra?: any): void {
+    Logger.log(message, LogLevel.DEBUG, extra);
   }
 
   public static async logAsync(
@@ -60,9 +120,25 @@ export default class Logger {
     }
   }
 
+  /**
+   * Formats the message according to settings
+   * @param {LogLevel} level - The level of logging (e.g., TRACE, DEBUG, INFO, WARNING, ERROR).
+   * @param {string} message - The message to log
+   * @param {any} [extra] - Any extra message to be appended to the end of the log
+   */
   private formatMessage(level: LogLevel, message: string, extra?: any): string {
-    // This will format the message according to logFormat
-    return "";
+    const timestamp = new Date().toISOString();
+    const logLevel = LogLevel[level];
+    let formattedMessage = this.logFormat
+      .replace("{{timestamp}}", timestamp)
+      .replace("{{level}}", logLevel)
+      .replace("{{message}}", message);
+
+    if (extra) {
+      formattedMessage += ` | Extra : ${JSON.stringify(extra, null, 2)}`;
+    }
+
+    return formattedMessage;
   }
 
   private writeToFile(message: string): void {
