@@ -6,6 +6,9 @@ import {
 import { appendToFile, appendToFileAsync, colorizeMessage } from "./helpers";
 import { LogLevel, LogMessage, LoggerConfig } from "./types";
 
+/**
+ * Logger class for handling logging with various log levels and configurations.
+ */
 export default class Logger {
   private static instance: Logger;
   private logLevel: LogLevel;
@@ -16,7 +19,7 @@ export default class Logger {
   private isColorized: boolean;
 
   /**
-   * Private constructor to prevent instantiation.
+   * Private constructor to prevent instantiation. Initializes default logger settings.
    */
   private constructor() {
     this.logLevel = LogLevel.INFO;
@@ -157,6 +160,10 @@ export default class Logger {
   /**
    * Configures the logger.
    * @param {LoggerConfig} configuration - The configuration object. Updates only the given configuration values.
+   * @param {LogLevel} [configuration.logLevel] - Default log level for the logger. If not specified, defaults to INFO.
+   * @param {string} [configuration.filePath] - Default file path relative to the current folder for the logger. Defaults to /logs folder of the current directory.
+   * @param {boolean} [configuration.colorized] - Boolean to colorize the logs or not. Setting it true will colorize logs according to their levels. Defaults to false.
+   * @param {string} [configuration.format] - Sets the format for the logger. Can be updated to change the order of variables in a log message. Default is "[{{level}}] [{{timestamp}}] {{message}}"
    */
   public static configure(configuration: LoggerConfig) {
     const { level, format, filePath, colorized } = configuration;
