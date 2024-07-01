@@ -1,4 +1,5 @@
-import { LogLevel } from "./types";
+import { DEFAULT_LOG_FILE_PATH, DEFAULT_LOG_FORMAT } from "./constants";
+import { LogLevel, LoggerConfig } from "./types";
 
 export default class Logger {
   private static instance: Logger;
@@ -6,13 +7,19 @@ export default class Logger {
   private logFormat: string;
   private logFilePath: string;
 
+  /**
+   * Private constructor to prevent instantiation.
+   */
   private constructor() {
     this.logLevel = LogLevel.INFO;
-    this.logFormat = "";
-    this.logFilePath = "/logs";
+    this.logFormat = DEFAULT_LOG_FORMAT;
+    this.logFilePath = DEFAULT_LOG_FILE_PATH;
   }
 
-  // Function to make it a singleton
+  /**
+   * Gets the singleton instance of the Logger.
+   * @returns {Logger} The singleton instance of the Logger.
+   */
   public static getInstance(): Logger {
     if (!Logger.instance) {
       Logger.instance = new Logger();
@@ -32,8 +39,25 @@ export default class Logger {
     // This will be used for async logging
   }
 
-  public static config() {
-    // This will be used to configure logger
+  /**
+   * Configures the logger.
+   * @param {LoggerConfig} configuration - The configuration object. Updates only the given configuration values.
+   */
+  public static configure(configuration: LoggerConfig) {
+    const { logLevel, logFormat, logFilePath } = configuration;
+    const logger = Logger.getInstance();
+
+    if (logLevel) {
+      logger.logLevel = logLevel;
+    }
+
+    if (logFormat) {
+      logger.logFormat = logFormat;
+    }
+
+    if (logFilePath) {
+      logger.logFilePath = logFilePath;
+    }
   }
 
   private formatMessage(level: LogLevel, message: string, extra?: any): string {

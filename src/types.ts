@@ -6,3 +6,8 @@ export enum LogLevel {
   DEBUG,
 }
 
+export interface LoggerConfig {
+  logLevel?: LogLevel;
+  logFormat?: string;
+  logFilePath?: string;
+}
