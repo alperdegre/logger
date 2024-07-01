@@ -1,4 +1,9 @@
-import { DEFAULT_LOG_FILE_PATH, DEFAULT_LOG_FORMAT } from "./constants";
+import {
+  DEFAULT_COLORIZED,
+  DEFAULT_LOG_FILE_PATH,
+  DEFAULT_LOG_FORMAT,
+} from "./constants";
+import { appendToFile, appendToFileAsync, colorizeMessage } from "./helpers";
 import { LogLevel, LogMessage, LoggerConfig } from "./types";
 
 export default class Logger {
@@ -8,6 +13,7 @@ export default class Logger {
   private logFilePath: string;
   private logQueue: LogMessage[] = [];
   private processingQueue: boolean = false;
+  private isColorized: boolean;
 
   /**
    * Private constructor to prevent instantiation.
@@ -16,6 +22,7 @@ export default class Logger {
     this.logLevel = LogLevel.INFO;
     this.logFormat = DEFAULT_LOG_FORMAT;
     this.logFilePath = DEFAULT_LOG_FILE_PATH;
+    this.isColorized = DEFAULT_COLORIZED;
   }
 
   /**
@@ -39,13 +46,18 @@ export default class Logger {
     const logger = Logger.getInstance();
 
     const currentLogLevel = level ?? logger.logLevel;
-    const formattedMessage = logger.formatMessage(
+    let formattedMessage = logger.formatMessage(
       currentLogLevel,
       message,
       extra
     );
+
+    appendToFile(logger.logFilePath, formattedMessage);
+
+    if (logger.isColorized)
+      formattedMessage = colorizeMessage(formattedMessage, currentLogLevel);
+
     console.log(formattedMessage);
-    // Maybe append to file here?
   }
 
   /**
@@ -126,11 +138,17 @@ export default class Logger {
       if (!logMessage) break;
 
       const currentLogLevel = logMessage.level ?? this.logLevel;
-      const formattedMessage = this.formatMessage(
+      let formattedMessage = this.formatMessage(
         currentLogLevel,
         logMessage.message,
         logMessage.extra
       );
+
+      appendToFileAsync(this.logFilePath, formattedMessage);
+
+      if (this.isColorized)
+        formattedMessage = colorizeMessage(formattedMessage, currentLogLevel);
+
       console.log(formattedMessage);
     }
     this.processingQueue = false;
@@ -141,12 +159,13 @@ export default class Logger {
    * @param {LoggerConfig} configuration - The configuration object. Updates only the given configuration values.
    */
   public static configure(configuration: LoggerConfig) {
-    const { logLevel, logFormat, logFilePath } = configuration;
+    const { level, format, filePath, colorized } = configuration;
     const logger = Logger.getInstance();
 
-    if (logLevel) logger.logLevel = logLevel;
-    if (logFormat) logger.logFormat = logFormat;
-    if (logFilePath) logger.logFilePath = logFilePath;
+    if (level) logger.logLevel = level;
+    if (format) logger.logFormat = format;
+    if (filePath) logger.logFilePath = filePath;
+    if (colorized) logger.isColorized = colorized;
   }
 
   /**
@@ -163,14 +182,9 @@ export default class Logger {
       .replace("{{level}}", logLevel)
       .replace("{{message}}", message);
 
-    if (extra) {
+    if (extra)
       formattedMessage += ` | Extra : ${JSON.stringify(extra, null, 2)}`;
-    }
 
     return formattedMessage;
-  }
-
-  private writeToFile(message: string): void {
-    // This will append the latest log to the end of the file
   }
 }

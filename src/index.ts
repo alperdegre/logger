@@ -9,7 +9,13 @@ const TEST_OBJECT = {
 
 async function main() {
   console.log("Sync Logging");
-  Logger.log("Application started", LogLevel.DEBUG);
+  Logger.configure({ colorized: true });
+  Logger.log("Application started", LogLevel.INFO);
+  Logger.log("Debug test", LogLevel.DEBUG);
+  Logger.log("Error test", LogLevel.ERROR);
+  Logger.log("Info test", LogLevel.INFO);
+  Logger.log("Verbose test", LogLevel.VERBOSE);
+  Logger.log("Warning test", LogLevel.WARNING);
   Logger.error("This is an error");
   Logger.debug("Test With Extra", TEST_OBJECT);
   Logger.debug(JSON.stringify(TEST_OBJECT, null, 2));
