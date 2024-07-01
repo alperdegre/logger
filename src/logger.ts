@@ -1,11 +1,13 @@
 import { DEFAULT_LOG_FILE_PATH, DEFAULT_LOG_FORMAT } from "./constants";
-import { LogLevel, LoggerConfig } from "./types";
+import { LogLevel, LogMessage, LoggerConfig } from "./types";
 
 export default class Logger {
   private static instance: Logger;
   private logLevel: LogLevel;
   private logFormat: string;
   private logFilePath: string;
+  private logQueue: LogMessage[] = [];
+  private processingQueue: boolean = false;
 
   /**
    * Private constructor to prevent instantiation.
@@ -91,12 +93,47 @@ export default class Logger {
     Logger.log(message, LogLevel.DEBUG, extra);
   }
 
+  /**
+   * Asynchronously logs a message with a specified log level.
+   * @param {string} message - The message to log
+   * @param {LogLevel} [level] - The level of the log (e.g., INFO, WARNING, ERROR). If not set, defaults to configured log level for the Logger instance.
+   * @param {any} [extra] - Any extra message to be appended to the end of the log
+   * @returns {Promise<void>} A promise that resolves after message gets logged
+   */
   public static async logAsync(
-    level: LogLevel,
     message: string,
+    level?: LogLevel,
     extra?: any
   ): Promise<void> {
-    // This will be used for async logging
+    const logger = Logger.getInstance();
+    const currentLogLevel = level ?? logger.logLevel;
+
+    logger.logQueue.push({ level: currentLogLevel, message, extra });
+    if (!logger.processingQueue) {
+      logger.processLogQueue();
+    }
+  }
+
+  /**
+   * Asynchronously processes the log queue.
+   * @private
+   * @returns {Promise<void>} A promise that resolves after the queue is processed
+   */
+  private async processLogQueue(): Promise<void> {
+    this.processingQueue = true;
+    while (this.logQueue.length > 0) {
+      const logMessage = this.logQueue.shift();
+      if (!logMessage) break;
+
+      const currentLogLevel = logMessage.level ?? this.logLevel;
+      const formattedMessage = this.formatMessage(
+        currentLogLevel,
+        logMessage.message,
+        logMessage.extra
+      );
+      console.log(formattedMessage);
+    }
+    this.processingQueue = false;
   }
 
   /**
@@ -107,17 +144,9 @@ export default class Logger {
     const { logLevel, logFormat, logFilePath } = configuration;
     const logger = Logger.getInstance();
 
-    if (logLevel) {
-      logger.logLevel = logLevel;
-    }
-
-    if (logFormat) {
-      logger.logFormat = logFormat;
-    }
-
-    if (logFilePath) {
-      logger.logFilePath = logFilePath;
-    }
+    if (logLevel) logger.logLevel = logLevel;
+    if (logFormat) logger.logFormat = logFormat;
+    if (logFilePath) logger.logFilePath = logFilePath;
   }
 
   /**

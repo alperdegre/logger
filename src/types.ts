@@ -11,3 +11,9 @@ export interface LoggerConfig {
   logFormat?: string;
   logFilePath?: string;
 }
+
+export type LogMessage = {
+  level: LogLevel;
+  message: string;
+  extra?: any;
+};
