@@ -113,3 +113,27 @@ Configures the logger with given settings.
 - `format` (string, optional): Format string for log messages.
 - `filePath` (string, optional): File path for logging.
 - `colorized` (boolean, optional): Whether log messages should be colorized.
+
+### Design Process and Further Improvements
+
+I will provide some insight on my thought process on how I wanted to design the `Logger` class. 
+
+I used static functions for public functions so it imitates behavior similar to console.log(). It is a singleton class that instantiates itself upon trying to log so no unnecessary instances of it will be created. Logging can be done instantly while writing to file is done via batched writes. This is because write operations take longer so it doesn't constantly try to open and write to a file. It also writes every day's logs to its own file so logs can be archived and searched easier when needed.
+
+#### Write Queue
+
+Writing to file logic can be further improved by implementing a queue logic that processes write operations with some time between them. Because in current implementation we batch logs together until they reach a treshold. If the amount of logs reach the treshold we write them instantly, if they dont we set a timeout so write operation occurs after a second passes. But in high load scenarios where millions of logs need to be logged in a second, we may need to implement a queue logic so batched writes get put into a queue and processed with time between them to reduce the load.
+
+#### Configurable Timestamps
+
+In current implementation timestamp format cannot be configured and it is just;
+
+```typescript
+const timestamp = new Date().toISOString()
+```
+
+This can be further improved by adding a configurable timestamp string and parsing it to how user wants it. Or we can use a package like moment.js to format the timestamp according to the given user string.
+
+#### Configurable Logging to Console According to Log Level
+
+In current implementation any log of any kind gets printed to the console as well as written to a file. This can be changed so `Logger` writes logs to console depending on their log level while writing every log into file. For example this would allow developer to configure the `Logger` to only show logs in the console that are Error or above in their priority level. This can be easily implemented as current log level is already an enum so number equivalent of the enum can be used to filter logs on `log` and `logAsync` functions
