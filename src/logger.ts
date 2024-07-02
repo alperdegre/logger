@@ -218,11 +218,13 @@ export default class Logger {
     if (Logger.batchLogs.length > BATCH_TRESHOLD) {
       Logger.flushAndWriteBatchedLogs();
     } else {
-      if (!Logger.batchTimeout) {
-        Logger.batchTimeout = setTimeout(() => {
-          Logger.flushAndWriteBatchedLogs();
-        }, BATCH_INTERVAL);
+      if (Logger.batchTimeout) {
+        clearTimeout(Logger.batchTimeout);
       }
+
+      Logger.batchTimeout = setTimeout(() => {
+        Logger.flushAndWriteBatchedLogs();
+      }, BATCH_INTERVAL);
     }
   }
 
